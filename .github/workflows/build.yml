@@ -1,4 +1,4 @@
-name: Build Mi 4c Kernel
+name: Build Mi 4c Overclock Kernel
 
 on:
   push:
@@ -16,18 +16,41 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y bc bison build-essential ccache curl flex git gnupg gperf imagemagick libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python2 clang llvm lld gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
 
-      - name: Compile Kernel
+      - name: Patch Overclock Frequencies & Makefile
         run: |
           sed -i 's/-polly-opt-fusion=max//g' arch/arm64/Makefile
           sed -i 's/-p //g; s/ -p//g' arch/arm64/Makefile
+          python3 -c '
+          import glob, re
+          for path in glob.glob("arch/arm64/boot/dts/**/*msm8992*.dtsi", recursive=True):
+              with open(path, "r") as f:
+                  s = f.read()
+              s = re.sub(r"qcom,cpufreq-table\s*=\s*<([^>]+)>;", lambda m: "qcom,cpufreq-table = <" + m.group(1) + " 1632000 2016000>;", s)
+              s = s.replace("1824000", "2016000").replace("1440000", "1632000")
+              s = s.replace("600000000", "700000000")
+              with open(path, "w") as f:
+                  f.write(s)
+          '
+
+      - name: Compile Kernel
+        run: |
           export ARCH=arm64
           export SUBARCH=arm64
           make O=out libra_defconfig
-          ./scripts/config --file out/.config -d LTO_CLANG -d LTO_CLANG_FULL -e LTO_NONE
+          ./scripts/config --file out/.config -e KALLSYMS -e KALLSYMS_ALL -d LTO_CLANG -d LTO_CLANG_FULL -e LTO_NONE
           make -j$(nproc) O=out CC="ccache clang" LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- KCFLAGS="-w" Image.gz-dtb
 
-      - name: Upload Kernel Image
+      - name: Package AnyKernel3 Flashable Zip
+        run: |
+          git clone --depth=1 https://github.com AnyKernel3
+          cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
+          sed -i 's/device.name1=.*/device.name1=libra/' AnyKernel3/anykernel.sh
+          sed -i 's/device.name2=.*/device.name2=Mi-4c/' AnyKernel3/anykernel.sh
+          sed -i 's|BLOCK=.*|BLOCK=/dev/block/bootdevice/by-name/boot;|' AnyKernel3/anykernel.sh
+          cd AnyKernel3 && zip -r9 ../Mi4c-OC-2.02GHz-AnyKernel3.zip * -x .git README.md *placeholder
+
+      - name: Upload Flashable Kernel Zip
         uses: actions/upload-artifact@v4
         with:
-          name: Mi4c-Kernel-Image
-          path: out/arch/arm64/boot/Image.gz-dtb
+          name: Mi4c-OC-Kernel-Flashable
+          path: Mi4c-OC-2.02GHz-AnyKernel3.zip
