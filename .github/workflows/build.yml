@@ -18,13 +18,13 @@ jobs:
 
       - name: Compile Kernel
         run: |
-          sed -i 's/-p //g; s/ -p//g' arch/arm64/Makefile
+          sed -i 's/ld\.lld/$(CROSS_COMPILE)ld.bfd/g' Makefile
           export ARCH=arm64
           export SUBARCH=arm64
           export CROSS_COMPILE=aarch64-linux-gnu-
           export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
           make O=out libra_defconfig
-          make -j$(nproc) O=out KCFLAGS="-w" Image.gz-dtb
+          make -j$(nproc) O=out KCFLAGS="-w -fvisibility=default" Image.gz-dtb
 
       - name: Upload Kernel Image
         uses: actions/upload-artifact@v4
