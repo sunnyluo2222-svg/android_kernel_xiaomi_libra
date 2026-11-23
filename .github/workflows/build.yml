@@ -23,7 +23,7 @@ jobs:
           export CROSS_COMPILE=aarch64-linux-gnu-
           export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
           make O=out libra_defconfig
-          make O=out KCFLAGS="-w" Image.gz-dtb
+          make O=out KCFLAGS="-w" CC=aarch64-linux-gnu-gcc LD=aarch64-linux-gnu-ld.bfd AR=aarch64-linux-gnu-ar NM=aarch64-linux-gnu-nm OBJCOPY=aarch64-linux-gnu-objcopy OBJDUMP=aarch64-linux-gnu-objdump STRIP=aarch64-linux-gnu-strip Image.gz-dtb
 
       - name: Upload Kernel Image
         uses: actions/upload-artifact@v4
