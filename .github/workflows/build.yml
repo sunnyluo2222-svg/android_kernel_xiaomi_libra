@@ -18,6 +18,7 @@ jobs:
 
       - name: Compile Kernel
         run: |
+          sed -i 's/-p //g; s/ -p//g' arch/arm64/Makefile
           export ARCH=arm64
           export SUBARCH=arm64
           export CROSS_COMPILE=aarch64-linux-gnu-
