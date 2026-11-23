@@ -21,10 +21,11 @@ jobs:
       - name: Install dependencies & Toolchains
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends bc bison build-essential ccache flex libssl-dev python2 clang llvm lld gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
+          sudo apt-get install -y --no-install-recommends bc bison build-essential ccache flex libncurses5-dev libssl-dev python2 clang llvm lld gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
 
       - name: Compile Kernel
         run: |
+          mkdir -p out
           sed -i 's/-mllvm -polly[^ ]*//g; s/-polly[^ ]*//g' Makefile arch/arm64/Makefile
           sed -i 's/\-p\b//g' Makefile arch/arm64/Makefile
           export ARCH=arm64
