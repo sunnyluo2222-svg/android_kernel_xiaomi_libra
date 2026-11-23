@@ -25,8 +25,8 @@ jobs:
 
       - name: Compile Kernel
         run: |
-          sed -i 's/-mllvm -polly[^ ]*//g; s/-polly[^ ]*//g' Makefile arch/arm64/Makefile
-          sed -i 's/\-p\b//g' Makefile arch/arm64/Makefile
+          sed -i 's/-polly-opt-fusion=max//g' Makefile arch/arm64/Makefile
+          sed -i 's/ -p / /g' Makefile arch/arm64/Makefile
           export ARCH=arm64
           export SUBARCH=arm64
           make O=out ARCH=arm64 libra_defconfig
